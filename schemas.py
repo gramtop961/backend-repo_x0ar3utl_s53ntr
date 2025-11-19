@@ -11,38 +11,51 @@ Model name is converted to lowercase for the collection name:
 - BlogPost -> "blogs" collection
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, Dict, Any
 
-# Example schemas (replace with your own):
+# Example schemas (you can keep or remove if not used):
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
+    email: EmailStr = Field(..., description="Email address")
     address: str = Field(..., description="Address")
     age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
     is_active: bool = Field(True, description="Whether user is active")
 
 class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
     title: str = Field(..., description="Product title")
     description: Optional[str] = Field(None, description="Product description")
     price: float = Field(..., ge=0, description="Price in dollars")
     category: str = Field(..., description="Product category")
     in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+# Ascendia landing related schemas
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Message(BaseModel):
+    """
+    Contact messages collection
+    Collection: "message"
+    """
+    name: str = Field(..., min_length=1, max_length=120)
+    email: EmailStr
+    subject: Optional[str] = Field(None, max_length=180)
+    message: str = Field(..., min_length=5, max_length=5000)
+
+class AnalyticsEvent(BaseModel):
+    """
+    Analytics events collection
+    Collection: "analyticsevent"
+    """
+    name: str = Field(..., description="Event name, e.g. page_view, cta_click")
+    properties: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    user_id: Optional[str] = None
+    session_id: Optional[str] = None
+
+class CheckoutSessionRequest(BaseModel):
+    course_id: Optional[str] = None
+    course_name: Optional[str] = None
+    amount_cents: int = Field(..., ge=50, description="Total amount in cents")
+    currency: str = Field("usd", min_length=3, max_length=3)
+    success_url: str
+    cancel_url: str
